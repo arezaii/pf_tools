@@ -21,12 +21,12 @@ For Python3
 ```
 python3 setup.py install
 
-```
+````
 
 Originality
 --------------------
 Most of the c code *pfio.c* is adapted from [ParFlow](https://github.com/parflow/parflow). Specifically, these codes were used:
-	1. printdatabox.c
+1. printdatabox.c
 	2. readdatabox.c
 	3. tools_io.c 
 
@@ -37,7 +37,7 @@ To read .pfb file
 
 ```
 import pfio
-data = pfio.pfread(*filename*)
+data = pfio.pfread(filename)
 
 ```
 
@@ -45,7 +45,7 @@ To write a new .pfb file
 
 ```
 import pfio
-pfio.pfwrite(*data*,*filename*,*X0*,*Y0*,*Z0*,*DX*,*DY*,*DZ*)
+pfio.pfwrite(data,filename,X0,Y0,Z0,DX,DY,DZ)
 ```
 
 
