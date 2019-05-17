@@ -21,14 +21,14 @@ For Python3
 ```
 python3 setup.py install
 
-````
+``````
 
 Originality
 --------------------
 Most of the c code *pfio.c* is adapted from [ParFlow](https://github.com/parflow/parflow). Specifically, these codes were used:
-1. printdatabox.c
-	2. readdatabox.c
-	3. tools_io.c 
++ printdatabox.c
++ readdatabox.c
++ tools_io.c 
 
 Usage
 --------------------
