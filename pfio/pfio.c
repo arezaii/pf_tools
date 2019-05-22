@@ -470,15 +470,7 @@ void freeme(double *aptr)
     free(aptr);
 }
 
-#if defined(PYTHON2)
-PyMODINIT_FUNC PyInit_pfio(void)
-{
-  (void)Py_InitModule("pfio", pf_funcs);
-  import_array();
-}
-#endif
 
-#if defined(PYTHON3)
 static struct PyModuleDef pfio =
 {
     PyModuleDef_HEAD_INIT,
@@ -494,7 +486,7 @@ PyMODINIT_FUNC PyInit_pfio(void)
   	import_array();
     return po;
 }
-#endif
+
 
 
 
