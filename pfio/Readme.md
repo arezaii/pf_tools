@@ -2,11 +2,13 @@ pfio
 =======
 
 *Major update:*
-Switch from PyArray_FromDims to PyArray_SimpleNew in order to be compatible with Numpy >1.18
+Switch from PyArray_FromDims to PyArray_SimpleNew in order to be compatible with Numpy >1.18.
+
+Thanks much for Mr. Ahmad Rezaii!
 
 ------------------------------
 
-*pfio* is a Python C extension for reading and writing ParFlow binary (.pfb) files. This repo contains files to install *pfio* as a Python module
+*pfio* is a Python C extension for reading and writing ParFlow binary (.pfb) files. This repo contains files to install *pfio* as a Python module.
 
 #### Development Team
 + Hoang Tran (hoangtran@mines.edu)
