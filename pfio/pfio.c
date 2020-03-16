@@ -232,7 +232,7 @@ static PyObject * pfread(PyObject *self, PyObject *args)
     
     PyArrayObject *array_out;
     
-    int dims[3];
+    npy_intp dims[3];
     
     double *val_array;
     
@@ -263,9 +263,11 @@ static PyObject * pfread(PyObject *self, PyObject *args)
     //}
     
     /* open the input file */
-    if ((fp = fopen(pfbfile, "rb")) == NULL)
+    if ((fp = fopen(pfbfile, "rb")) == NULL) {
       //return 2.; //NULL;
       printf("uh oh - can't open the file...\n");
+      return NULL;
+      }
     //fp = fopen("Test.pfb", "rb");
     /*if (!fp)
 		{
@@ -298,7 +300,7 @@ static PyObject * pfread(PyObject *self, PyObject *args)
     dims[2] = NX;
     N = NZ*NY*NX;
     
-    array_out = (PyArrayObject*) PyArray_FromDims(3, dims, NPY_DOUBLE);
+    array_out = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_DOUBLE);
     val_array = (double*)PyArray_DATA(array_out);
     
     //val_array = (double *)malloc(sizeof(double) * N);
@@ -392,9 +394,12 @@ static PyObject * pfwrite(PyObject *self, PyObject *args)
     char *pfbfile;
     
     double *val_array;
+    double *new_val_array;
+    PyArrayObject *array_out;
     
-    int        j, k, i;
-    
+    int        j, k, i, iteri;
+    int 		num_iter;
+    npy_intp dims[3];
     double     X, Y, Z;
     int        NX, NY, NZ;
     double     DX, DY, DZ;
@@ -447,20 +452,67 @@ static PyObject * pfwrite(PyObject *self, PyObject *args)
 	tools_WriteInt(fp, &rz, 1);
 	
 	//Trying to reverse back the array
-    for (k = 0; k < NZ; k++)
-    {
-    	for (j = 0; j < NY/2; j++)
-    	{
-    		for (i = 0; i < NX; i++)
-    		{
-    			double temp = val_array[k*NX*NY+j*NX+i];
-				val_array[k*NX*NY+j*NX+i]=val_array[k*NX*NY+(NY-j-1)*NX+i];
-				val_array[k*NX*NY+(NY-j-1)*NX+i] = temp; 
-    		}
-    	}
-    }
+	if (NZ < 3) {
+		dims[0] = NZ;
+		dims[1] = NY;
+		dims[2] = NX;
 	
-	tools_WriteDouble(fp, val_array, nx*ny*nz);
+		array_out = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_DOUBLE);
+		new_val_array = (double*)PyArray_DATA(array_out);
+		for (k = 0; k < NZ; k++)
+		{
+			for (j = 0; j < (NY/2 +1) ; j++)
+			{
+				for (i = 0; i < NX; i++)
+				{
+					//double temp = val_array[k*NX*NY+j*NX+i];
+					//val_array[k*NX*NY+j*NX+i]=val_array[k*NX*NY+(NY-j-1)*NX+i];
+					//val_array[k*NX*NY+(NY-j-1)*NX+i] = temp; 
+					new_val_array[k*NX*NY+j*NX+i]=val_array[k*NX*NY+(NY-j-1)*NX+i];
+					new_val_array[k*NX*NY+(NY-j-1)*NX+i]=val_array[k*NX*NY+j*NX+i];
+				}
+			}
+		}
+	
+		tools_WriteDouble(fp, new_val_array, nx*ny*nz);
+	}
+	else {
+		num_iter = NZ/3 +1 ;
+		//printf("num_iter = %i \n", num_iter);
+		for (iteri = 0; iteri < num_iter; iteri++) {
+			int starti = iteri*3;
+			int endi = (iteri+1)*3;
+			int mini_nz = 3;
+			if (endi > NZ) {
+				endi = NZ;
+				mini_nz = endi - starti;
+			}
+			//printf("starti = %i \n endi = %i \n mini_nz = %i \n", starti, endi, mini_nz);
+			dims[0] = mini_nz;
+			dims[1] = NY;
+			dims[2] = NX;
+	
+			array_out = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_DOUBLE);
+			new_val_array = (double*)PyArray_DATA(array_out);
+			for (k = starti; k < endi; k++)
+			{
+				for (j = 0; j < (NY/2 +1) ; j++)
+				{
+					for (i = 0; i < NX; i++)
+					{
+						//double temp = val_array[k*NX*NY+j*NX+i];
+						//val_array[k*NX*NY+j*NX+i]=val_array[k*NX*NY+(NY-j-1)*NX+i];
+						//val_array[k*NX*NY+(NY-j-1)*NX+i] = temp; 
+						new_val_array[(k-iteri*3)*NX*NY+j*NX+i]=val_array[k*NX*NY+(NY-j-1)*NX+i];
+						new_val_array[(k-iteri*3)*NX*NY+(NY-j-1)*NX+i]=val_array[k*NX*NY+j*NX+i];
+					}
+				}
+			}
+	
+			tools_WriteDouble(fp, new_val_array, nx*ny*mini_nz);
+		}
+	}
+	
 	Py_RETURN_NONE;
 }
 
