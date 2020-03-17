@@ -400,9 +400,6 @@ static PyObject * pfwrite(PyObject *self, PyObject *args)
     int        j, k, i, iteri;
     int 		num_iter;
     npy_intp dims[3];
-    
-    int        j, k, i;
-    int dims[3];
 	
     double     X, Y, Z;
     int        NX, NY, NZ;
@@ -518,29 +515,6 @@ static PyObject * pfwrite(PyObject *self, PyObject *args)
 		}
 	}
 	
-=======
-	dims[0] = NZ;
-    dims[1] = NY;
-    dims[2] = NX;
-	array_out = (PyArrayObject*) PyArray_FromDims(3, dims, NPY_DOUBLE);
-    new_val_array = (double*)PyArray_DATA(array_out);
-    for (k = 0; k < NZ; k++)
-    {
-    	for (j = 0; j < NY/2; j++)
-    	{
-    		for (i = 0; i < NX; i++)
-    		{
-    			//double temp = val_array[k*NX*NY+j*NX+i];
-				//val_array[k*NX*NY+j*NX+i]=val_array[k*NX*NY+(NY-j-1)*NX+i];
-				//val_array[k*NX*NY+(NY-j-1)*NX+i] = temp; 
-				new_val_array[k*NX*NY+j*NX+i]=val_array[k*NX*NY+(NY-j-1)*NX+i];
-				new_val_array[k*NX*NY+(NY-j-1)*NX+i]=val_array[k*NX*NY+j*NX+i];
-    		}
-    	}
-    }
-	
-	tools_WriteDouble(fp, new_val_array, nx*ny*nz);
->>>>>>> 4a5820bc725ce7983de901e37830c702bb6cab00
 	Py_RETURN_NONE;
 }
 
