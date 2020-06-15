@@ -2,9 +2,14 @@
 
 Python wrapped Fortran PF IO codes
 
+## Prerequisites
+
+* Fortran compiler
+* Numpy
+
 ## Install
 
-Recommend that this is installed in it's own virtual environment, like a conda environment, rather than at the system level.
+Recommend that this tool is installed in it's own virtual environment, like a conda environment, rather than at the system level.
 
 ```
 git clone https://github.com/arezaii/pf_tools.git
