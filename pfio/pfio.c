@@ -9,16 +9,18 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include "numpy/arrayobject.h"
 
+uint64_t pfntohll(uint64_t value);
+
+
 #define READINT(V,f) {uint32_t buf; \
                          fread(&buf, 4, 1, f);\
                          uint32_t temp =  ntohl(buf);\
                          V = *(int*)&temp;}
 #define READDOUBLE(V,f) {uint64_t buf; \
                          fread(&buf, 8, 1, f);\
-                         uint64_t temp =  ntohll(buf);\
+                         uint64_t temp =  pfntohll(buf);\
                          V = *(double*)&temp;}
 
-/*#include "readpfb.h"*/
 
 /* #### Utility functions ######################### */
 typedef unsigned char byte;
@@ -459,6 +461,13 @@ PyMODINIT_FUNC PyInit_pfio(void)
     return po;
 }
 
-
-
-
+uint64_t pfntohll(uint64_t value) {
+    if (htonl(1) != 1){
+        const uint32_t high_part = htonl((uint32_t)(value >> 32));
+        const uint32_t low_part = htonl((uint32_t)(value));// & 0xFFFFFFFFLL));
+        uint64_t retval = (uint64_t)low_part << 32;
+        retval = retval | high_part;
+        return retval;
+    } 
+    return value;
+}
