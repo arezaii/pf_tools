@@ -3,11 +3,24 @@
 */
 #include "Python.h"
 #include "endian.h"
+#include <arpa/inet.h>
+#include <stdint.h>
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include "numpy/arrayobject.h"
 
-/*#include "readpfb.h"*/
+uint64_t pfntohll(uint64_t value);
+
+
+#define READINT(V,f) {uint32_t buf; \
+                         fread(&buf, 4, 1, f);\
+                         uint32_t temp =  ntohl(buf);\
+                         V = *(int*)&temp;}
+#define READDOUBLE(V,f) {uint64_t buf; \
+                         fread(&buf, 8, 1, f);\
+                         uint64_t temp =  pfntohll(buf);\
+                         V = *(double*)&temp;}
+
 
 /* #### Utility functions ######################### */
 typedef unsigned char byte;
@@ -205,184 +218,91 @@ void InitEndian( void )
 /* #### Main read and write pfb files functions ######################### */
 
 static PyObject * pfread(PyObject *self, PyObject *args);
-
 static PyObject * pfwrite(PyObject *self, PyObject *args);
-
 static PyMethodDef pf_funcs[] = { { "pfread", pfread, METH_VARARGS },
-									{ "pfwrite", pfwrite, METH_VARARGS },
-                                          { NULL, NULL } };
+                                  { "pfwrite", pfwrite, METH_VARARGS },
+                                  { NULL, NULL } };
    
-/* ReadPFB(char *file_name)*/
-static PyObject * pfread(PyObject *self, PyObject *args)
-{
-    FILE *fp;
+/*******************************************************************************
+Function: pfread(char *file_name)
+Reads a pfb file into a 3 dimensional PyArraytObject
+*******************************************************************************/
+static PyObject * pfread(PyObject *self, PyObject *args){
+  FILE *fp;
+  char *pfbfile;
     
-    char *pfbfile;
-    
-    if (!PyArg_ParseTuple(args, "s", &pfbfile)) {
-      return NULL;
-   }
-    
-    //double * data2 = (double *) data1;  
-    //double * outdata2 = (double *) outdata;
+  if (!PyArg_ParseTuple(args, "s", &pfbfile)) {
+    return NULL;
+  }
    
-    int        counter;
-    //struct  hdr1 my_hdr1;
-    /*struct  hdr2 my_hdr2;*/
+  PyArrayObject *array_out;
+  npy_intp dims[3];
+  double *val_array;
+   
+  // header variables 
+  double     X, Y, Z;
+  int        NX, NY, NZ, N;
+  double     DX, DY, DZ;
+  int        num_subgrids;
+  // subgrid header variables
+  int        x, y, z;
+  int        nx, ny, nz;
+  int        rx, ry, rz;
+  // looping variables
+  int        nsg, j, k, i;
+  // address calculation
+  int        qq;
     
-    PyArrayObject *array_out;
+  // open the input file 
+  if ((fp = fopen(pfbfile, "rb")) == NULL) {
+    perror("Error opening pfbfile");
+    return NULL;
+  }
+  /* read in header information */
+  READDOUBLE(X,fp);
+  READDOUBLE(Y,fp);
+  READDOUBLE(Z,fp);
+  READINT(NX,fp); 
+  READINT(NY,fp); 
+  READINT(NZ,fp); 
+  READDOUBLE(DX,fp);
+  READDOUBLE(DY,fp);
+  READDOUBLE(DZ,fp);
+   
+  // allocate output array 
+  dims[0] = NZ;
+  dims[1] = NY;
+  dims[2] = NX;
+  N = NZ*NY*NX;
     
-    npy_intp dims[3];
+  array_out = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_DOUBLE);
+  val_array = (double*)PyArray_DATA(array_out);
     
-    double *val_array;
-    
-    double     X, Y, Z;
-    int        NX, NY, NZ, N;
-    //int        NX, NY, NZ;
-    double     DX, DY, DZ;
-    int        num_subgrids;
-    
-    int        x, y, z;
-    int        nx, ny, nz;
-    int        rx, ry, rz;
-    
-    int        nsg, j, k, i;
-    
-    int        qq;
-    
-    //double     *ptr;
-        
-    double     val;
-   //double     *data1;
-    
-    //unsigned char bytes[8];
-    //int sum = 0;
-    //FILE *fp=fopen("Test.pfb","rb");
-    //while ( fread(bytes, 4, 1,fp) != 0) {
-    //    sum += bytes[0] | (bytes[1]<<8) | (bytes[2]<<16) | (bytes[3]<<24);
-    //}
-    
-    /* open the input file */
-    if ((fp = fopen(pfbfile, "rb")) == NULL) {
-      //return 2.; //NULL;
-      printf("uh oh - can't open the file...\n");
-      return NULL;
-      }
-    //fp = fopen("Test.pfb", "rb");
-    /*if (!fp)
-		{
-			printf("Unable to open file!");
-			return 1;
-		} */
-         
-    /* read in header information */
-    InitEndian();
-    //printf("BigEndian = %i\n", BigEndianSystem);
-    /* read in header info - as taken from readdatabox.c*/
-    fread(&X, 8, 1, fp);
-    fread(&Y, 8, 1, fp);
-    fread(&Z, 8, 1, fp);
-	
-    X = LittleFloat(X);
-    Y = LittleFloat(Y);
-    Z = LittleFloat(Z);
-    
-    fread(&NX, 4, 1, fp);
-    fread(&NY, 4, 1, fp);
-    fread(&NZ, 4, 1, fp);
-        
-    NX = BigLong(NX);
-    NY = BigLong(NY);
-    NZ = BigLong(NZ);
-    
-    dims[0] = NZ;
-    dims[1] = NY;
-    dims[2] = NX;
-    N = NZ*NY*NX;
-    
-    array_out = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_DOUBLE);
-    val_array = (double*)PyArray_DATA(array_out);
-    
-    //val_array = (double *)malloc(sizeof(double) * N);
-    //double val_array[NZ][NY][NX];
-    
-    fread(&DX, 8, 1, fp);
-    fread(&DY, 8, 1, fp);
-    fread(&DZ, 8, 1, fp);
-    
-    DX = BigFloat(DX);
-    DY = BigFloat(DY);
-    DZ = BigFloat(DZ);
-    
-    fread(&num_subgrids, 4, 1, fp);
-    num_subgrids = BigLong(num_subgrids);
+  READINT(num_subgrids,fp); 
+  for (nsg = num_subgrids;nsg>0; nsg--){
+    // read subgrid header
+    READINT(x,fp); 
+    READINT(y,fp); 
+    READINT(z,fp); 
+    READINT(nx,fp); 
+    READINT(ny,fp); 
+    READINT(nz,fp); 
+    READINT(rx,fp); 
+    READINT(ry,fp); 
+    READINT(rz,fp); 
      
-    //printf("X = %f \n Y = %f \n Z = %f \n", X, Y, Z);
-    //printf("NX = %i \n NY = %i \n NZ = %i \n", NX, NY, NZ);
-    //printf("DX = %f \n DY = %f \n DZ = %f \n Subgrids = %i \n", DX, DY, DZ, num_subgrids);
-    
-    counter = 0;
-    /* read in the databox data - from readdatabox.c - HOW TO PUT DATA INTO ARRAY to PASS TO PYTHON???*/
-    for (nsg = num_subgrids; nsg--;)
-    {
-      fread(&x, 4, 1, fp);
-      fread(&y, 4, 1, fp);
-      fread(&z, 4, 1, fp);
-      
-       x = BigLong(x);
-       y = BigLong(y);
-       z = BigLong(z);
-      
-      fread(&nx, 4, 1, fp);
-      fread(&ny, 4, 1, fp);
-      fread(&nz, 4, 1, fp);
-      
-       nx = BigLong(nx);
-       ny = BigLong(ny);
-       nz = BigLong(nz);
-
-      fread(&rx, 4, 1, fp);
-      fread(&ry, 4, 1, fp);
-      fread(&rz, 4, 1, fp);
-      //printf("nx = %i,  x = %i \n ny = %i,  y = %i \nnz = %i,  z = %i \n", nx, x,ny, y,nz, z);
-      for (k = 0; k < nz; k++)
-      {
-          //for (j = ny-1; j >=0; j--) //flip along y axis
-          for (j = 0; j <ny; j++)
-          {
-              for (i = 0; i < nx; i++)
-	          {   
-	              //qq = (x+i)*(y+j)*(z+k);
-	              qq = ((z+k)*(NX*NY)) + ((NX)*(y+j)+(x+i));
-	              fread(&val, 8, 1, fp);
-	              val = BigFloat(val);
-	              val_array[qq] = (double)val;
-	              //outdata2[qq] = data2[qq] * 2;
-                      //counter += 1;
-	              //val_array[(x+i)][(y+j)][(z+k)] = val;
-	              //ptr = DataboxCoeff(v, x, (y + j), (z + k));
-	              //tools_ReadDouble(fp, ptr,  nx);
-	           }
-	       }
-	    }
-	}
-    fclose(fp);
-    //return 0;
-    //Trying to reverse the array
-    for (k = 0; k < NZ; k++)
-    {
-    	for (j = 0; j < NY/2; j++)
-    	{
-    		for (i = 0; i < NX; i++)
-    		{
-    			double temp = val_array[k*NX*NY+j*NX+i];
-				val_array[k*NX*NY+j*NX+i]=val_array[k*NX*NY+(NY-j-1)*NX+i];
-				val_array[k*NX*NY+(NY-j-1)*NX+i] = temp; 
-    		}
-    	}
+    // read values for subgrid 
+    for (k = 0; k < nz; k++){
+      for (j = 0; j <ny; j++){
+        for (i = 0; i < nx; i++){   
+	  qq = ((z+k)*(NX*NY)) + ((NX)*(y+j)+(x+i));
+          READDOUBLE(val_array[qq],fp);
+        }
+      }
     }
-    return PyArray_Return(array_out);
-    //return data1;
+  }
+  fclose(fp);
+  return PyArray_Return(array_out);
 }
 
 static PyObject * pfwrite(PyObject *self, PyObject *args)
@@ -541,6 +461,13 @@ PyMODINIT_FUNC PyInit_pfio(void)
     return po;
 }
 
-
-
-
+uint64_t pfntohll(uint64_t value) {
+    if (htonl(1) != 1){
+        const uint32_t high_part = htonl((uint32_t)(value >> 32));
+        const uint32_t low_part = htonl((uint32_t)(value));// & 0xFFFFFFFFLL));
+        uint64_t retval = (uint64_t)low_part << 32;
+        retval = retval | high_part;
+        return retval;
+    } 
+    return value;
+}
