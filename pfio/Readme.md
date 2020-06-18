@@ -31,6 +31,24 @@ python3 setup.py install
 
 ``````
 
+Notes:
+---------------------
+On MacOS you may need to force building with clang instead of gcc.  If you get an error like:
+`fatal error: limits.h: No such file or directory`
+It is likely due to gcc not finding the correct errors.  The Python setup script uses the CC environment variable for chosing a compiler, you can set it like this (in bash):
+```
+>export CC=clang
+```
+or in c-shell
+```
+>setenv CC clang
+```
+then 
+```
+python3 setup.py install
+```
+
+
 Originality
 --------------------
 Most of the c code *pfio.c* is adapted from [ParFlow](https://github.com/parflow/parflow). Specifically, these codes were used:
