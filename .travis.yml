@@ -10,7 +10,7 @@ install:
   - git clone https://github.com/arezaii/pf_tools
   - cd pf_tools/pfio
   - pip install .
-  - cd ../pf_fort_io
+  - cd ../fort_io
   - pip install .
   - cd ../tests
 # command to run tests
