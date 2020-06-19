@@ -6,7 +6,7 @@ python:
 # command to install dependencies
 install:
   - sudo apt update
-  - pip install requiremtents.txt
+  - pip install requirements.txt
   - git clone https://github.com/arezaii/pf_tools
   - cd pf_tools/pfio
   - pip install .
