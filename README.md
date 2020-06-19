@@ -1,5 +1,7 @@
 # ParFlow IO Tools
 
+[![Build Status](http://travis-ci.com/arezaii/pf_tools.svg?branch=master)](http://travis-ci.com/arezaii/pf_tools)
+
 Experimental code for reading/writing ParFlow PFB files
 
 ## Requirements
