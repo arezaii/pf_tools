@@ -1,0 +1,19 @@
+language: python
+python:
+  - "3.6"      # current default Python on Travis CI
+  - "3.7"
+  - "3.8"
+# command to install dependencies
+install:
+  - sudo apt update
+  - sudo apt-get install gfortran
+  - pip install -r requirements.txt
+  - git clone --single-branch -b experimental https://github.com/arezaii/pf_tools
+  - cd pf_tools/pfio
+  - pip install .
+  - cd ../fort_io
+  - pip install .
+  - cd ../tests
+# command to run tests
+script:
+  - python -m unittest discover -p '*_tests.py'
