@@ -8,7 +8,7 @@ install:
   - sudo apt update
   - sudo apt-get install gfortran
   - pip install -r requirements.txt
-  - git clone https://github.com/arezaii/pf_tools
+  - git clone --single-branch -b experimental https://github.com/arezaii/pf_tools
   - cd pf_tools/pfio
   - pip install .
   - cd ../fort_io
