@@ -3,7 +3,7 @@ import time
 import pf_pytools.pf_fort_io as pf_fort_io
 import pfio
 
-input_pfb = '/home/arezaii/data/CONUS.5layer.pfclm.run4.out.clm_output.00002.C.pfb'
+input_pfb = '/home/arezaii/data/CONUS.5layer.pfclm.run4.out.clm_output.00001.C.pfb'
 
 t3 = time.perf_counter()
 fort_pfb_data = np.zeros((3342, 1888, 17), order='F')
