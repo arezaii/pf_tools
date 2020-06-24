@@ -12,7 +12,6 @@ class ReaderTestVerification(unittest.TestCase):
         fort_io.pfb_read(fort_pfb_data, input_pfb)
         fort_pfb_data = np.transpose(fort_pfb_data, (2, 1, 0))
         c_pfb_data = pfio.pfread(input_pfb)
-        c_pfb_data = np.flipe(c_pfb_data, axis=1)
         self.assertIsNone(np.testing.assert_array_equal(fort_pfb_data, c_pfb_data))
         self.assertIsNone(np.testing.assert_array_equal(fort_pfb_data, numpy_data))
         self.assertIsNone(np.testing.assert_array_equal(c_pfb_data, numpy_data))
